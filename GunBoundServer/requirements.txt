@@ -1,0 +1,7 @@
+altgraph==0.16.1
+future==0.17.1
+macholib==1.11
+pefile==2018.8.8
+pycryptodome==3.7.2
+PyInstaller==3.4
+pywin32-ctypes==0.2.0
