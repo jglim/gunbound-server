@@ -4,7 +4,6 @@ This project attempts to emulate the server components of GunBound Thor's Hammer
 
 **Screenshots**
 
-![Room creation](https://raw.github.com/jglim/gunbound-server/master/Other/roomcreate.gif)
 ![Channel Chat](https://raw.github.com/jglim/gunbound-server/master/Other/channelchat.gif)
 ![Game Load](https://raw.github.com/jglim/gunbound-server/master/Other/gb-gameload.png)
 ![In Game](https://raw.github.com/jglim/gunbound-server/master/Other/gb-ingame.png)
@@ -27,6 +26,7 @@ This project attempts to emulate the server components of GunBound Thor's Hammer
 **Game Server: Mostly implemented**
 - Login fully supports Serv2 protocol, and some GIS/GKS clients
     - Credentials and client version can be validated, and clients can be optionally rejected
+    - (new!) Cryptography fully implemented in Python (completely portable)
     - User's game rank can be changed
     - User's guild name can be changed
     - Guild rank value is indicated but unused
@@ -111,9 +111,6 @@ _Requires Python 3.6_
     - A hacky solution I used is to send the *response* for channel join even though it was not requested, as that changes the gamemode to 3 (channel/directory). Everything else seems to work fine from there.
     - Why is the channel join request never made? Is it a CSAuth issue?
 - Test multiplayer that's more than just 1v1. I don't have enough machines, and VMs do not play well with my wireless NIC.
-- Fix the SHA1 binary blob
-    - The existing implementation rips out the relevant x86 instructions from the Serv2 binary
-    - Ideally this should be done purely in Python (Check out the docs below, under Cryptography)
 - Tidy up `CommandProcessor`, split `gameserver.py` into manageable-sized chunks
 
 ---
@@ -259,7 +256,7 @@ GunBound encrypts some packets such as channel communications, avatar shop inter
 - Client sends a PING `0x1000` packet
 - Server acknowledges with PONG `0x1001`, with a 4-byte nonce
 - Client generates a dynamic AES key:
-    - A SHA1-like function is initialized
+    - A SHA0-like function is initialized
     - Username, _plain_ password and nonce is individually added
     - The hash is finalized, and the first 16 bytes are used as the dynamic AES key
 - The login packet begins with the username and hashed password (AES-128, ECB) using a fixed key `FFB3B3BEAE97AD83B9610E23A43C2EB0`
@@ -268,9 +265,10 @@ GunBound encrypts some packets such as channel communications, avatar shop inter
 
 Because of the way which the dynamic key is determined (during the hashing process), **user passwords have to be stored in plaintext**.
 
-#### SHA1-like function
+#### Modified SHA-0
 
-The function is named as such due to the presence of SHA1 additive constants, along with a disassembly that operates like SHA1 (init, add, finalize). As I was unable to get identical results from existing cryptography libraries, I chose to rip the instructions directly from the Serv2 binary into a standalone PE (see LINK-TO-MASM for the `.asm` file). The performance hit is negligible especially since this is only used once per login/session, though I would prefer to have it done purely in Python for portability, and to reduce the use of binary blobs. _The function might be SHA, SEAL or RIPEMD - this has not been checked yet._
+A modified SHA-0 hash is used when the client and server generate a shared dynamic AES key. The hash itself is SHA-0, although every DWORD in the output (5 total) is endian-flipped. AES only requires 16 bytes for a key, so the last 4 bytes are discarded. The original code used by GunBound appears to be from OpenSSL, sharing the same SHA_CTX structure.
+
 
 #### AES
 
