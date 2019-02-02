@@ -1,4 +1,3 @@
-import subprocess
 from Crypto.Cipher import AES
 
 
@@ -22,25 +21,6 @@ def int_to_bytes(input_integer, size):
 # left rotate a DWORD n by b bits
 def left_rotate(n, b):
     return ((n << b) | (n >> (32 - b))) & 0xffffffff
-
-
-def get_dynamic_key_legacy(username, password, auth_token):
-    # expected result for "admin", "password", 0D2B5728
-    # 8D2B5728050000000800000061646D696E000000000000000000000070617373776F72640000000000000000
-    # expected response = 966EFFC3DE3AD8B02CC918D16923E8FB
-    result = bytearray()
-    result.extend(auth_token)
-    result.append(len(username))
-    result.extend(bytes.fromhex("00" * 3))  # expects a dword
-    result.append(len(password))
-    result.extend(bytes.fromhex("00" * 3))  # expects a dword
-    result.extend(username.encode("ascii"))
-    result.extend(bytes.fromhex("00" * (16 - len(username))))  # expects 16 bytes
-    result.extend(password.encode("ascii"))
-    result.extend(bytes.fromhex("00" * (16 - len(password))))  # expects 16 bytes
-    command = "".join("{:02X}".format(b) for b in result)
-    response = subprocess.run(['gbsha1.exe', command], stdout=subprocess.PIPE).stdout.decode('utf-8')
-    return bytes.fromhex(response)
 
 
 def sha0_process_block(chunk):
@@ -199,12 +179,3 @@ if __name__ == "__main__":
     print(bytes_to_hex(gunbound_dynamic_decrypt(
         bytes.fromhex("07 EB 74 B1 D0 DA B9 36 1A 1A 53 14 03 97 3D 62 90 74 82 8E 89 60 EC 38 41 65 05 27 D4 0E B8 F3"),
         "amigos", "amigos", bytes.fromhex("62 EF 09 15"), 0x4412)))
-
-    # testing pure-python implementation of get_dynamic_key
-    test_user = "admin"
-    test_pass = "password"
-    test_token = bytes.fromhex("41414141")
-    print("original:", bytes_to_hex(get_dynamic_key_legacy(test_user, test_pass, test_token)))
-    print("new:    :", bytes_to_hex(get_dynamic_key(test_user, test_pass, test_token)))
-    # original: BE2A74B94B45B8297A7916994C1AA3F9
-    # p3:     : BE2A74B94B45B8297A7916994C1AA3F9
