@@ -1,6 +1,5 @@
 import socket
 import threading
-import json
 
 # GunBound Thor's Hammer packet layout:
 # Packet Data: 0c 00 eb cb 12 13 30 00 ff ff ff ff
@@ -178,20 +177,5 @@ class BrokerServer(object):
         return response
 
 
-# this remains here for people who would like to run the broker server as a standalone script
-def load_json_from_file():
-    # List of servers to be broadcast by the broker server
-    server_options = []
-    with open('directory.json') as directory_data_text:
-        directory_data = json.load(directory_data_text)
-        for json_row in directory_data["server_options"]:
-            server_options.append(ServerOption(json_row["server_name"], json_row["server_description"],
-                                               json_row["server_address"], json_row["server_port"],
-                                               json_row["server_utilization"], json_row["server_capacity"],
-                                               json_row["server_enabled"]))
-    return server_options
-
-
 if __name__ == "__main__":
-    options = load_json_from_file()
-    BrokerServer("0.0.0.0", 8372, options).listen()
+    print("for standalone operation, see https://github.com/jglim/gunbound-broker")
