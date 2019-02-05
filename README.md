@@ -101,6 +101,7 @@ _Requires Python 3.6_
     - However when this occurs, the client shows an invisible tank in the lobby, and defaults to Armor in game. 
     - The dragon/knight assets are present in the client
     - How can the intended behavior be restored?
+    - Use the command `/tankset 14` or `/tankset 15` after joining a room to reproduce this bug
 - Set start position
     - When a game starts, players are randomly assigned in-game positions
     - The data should be read off `*_stage_pos.txt` and slots are picked based on the map
@@ -247,7 +248,15 @@ These are the key "Serv2" components required for full GunBound functionality:
 
 ### Sequence
 
-TODO
+After establishing a connection, both client and server both track of the number of bytes that they have sent and received. "Sequence" is a 16-bit value (WORD) that can be calculated from the number of sent bytes:
+
+Server to Client, where `sum_packet_length` is the total number of bytes that the server has sent the client. 
+
+`(((sum_packet_length * 0x43FD) & 0xFFFF) - 0x53FD) & 0xFFFF`
+
+When generating a sequence value for sending a packet, take note that the `sum_packet_length` also includes the size of the outgoing packet.
+
+This server does not verify the client's sequence, as TCP implies that the packet order and values are already checked at a lower layer. The sequence value may be more useful in UDP, especially during GunBound's in-game P2P communication.
 
 ### Cryptography
 
@@ -267,7 +276,7 @@ Because of the way which the dynamic key is determined (during the hashing proce
 
 #### Modified SHA-0
 
-A modified SHA-0 hash is used when the client and server generate a shared dynamic AES key. The hash itself is SHA-0, although every DWORD in the output (5 total) is endian-flipped. AES only requires 16 bytes for a key, so the last 4 bytes are discarded. The original code used by GunBound appears to be from OpenSSL, sharing the same SHA_CTX structure.
+A modified SHA-0 hash is used when the client and server generate a shared dynamic AES key. The hash itself is SHA-0, although every DWORD in the output (5 total) is endian-flipped. AES only requires 16 bytes for a key, so the last 4 bytes are discarded. The original code used by GunBound appears to be from OpenSSL, sharing the same `SHA_CTX` structure.
 
 
 #### AES
@@ -287,15 +296,37 @@ Keys can be found by placing a breakpoint before the AES block operation, and re
 
 **Normal**
 
-TODO
+Most unencrypted packets follow this format
+```
+Packet length: 2 Bytes / WORD
+Sequence: 2 Bytes / WORD
+Command: 2 Bytes / WORD
+Payload: 0-N Bytes, defined by packet length
+```
 
 **RTC**
 
-TODO
+Essentially a normal packet with an extra "RTC" value before the payload. This is used in room-related packets. I have no idea what "RTC" stands for; the name is simply lifted from the disassembly.
+```
+Packet length: 2 Bytes / WORD
+Sequence: 2 Bytes / WORD
+Command: 2 Bytes / WORD
+RTC: 2 Bytes / WORD
+Payload: 0-N Bytes, defined by packet length
+```
 
 **Encrypted**
 
-TODO
+There are commands that encrypt the payload of the packet _(cash-updates, avatar commands, user query, game start, channel chat and in-game server commands)_. Depending on the command, they can either be in the style of a "Normal" or "RTC" packet. 
+
+To encrypt a packet
+- Calculate the check value, a 32-bit result of `0x8631607E + command`
+- Pad the payload until the payload size is a multiple of 12.
+- Split the payload into chunks of 12 bytes
+- For every chunk of 12 bytes, prepend the check value
+- Reassemble the chunks, which should now be 16 bytes each
+- The reassembled bytes can now be encrypted (AES) using the client's dynamic key
+
 
 ### P2P
 TODO: describe host "key"
