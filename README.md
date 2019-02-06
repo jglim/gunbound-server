@@ -343,6 +343,7 @@ TODO
 The Softnyx programmers appear to be big fans of [Neon Genesis Evangelion](https://en.wikipedia.org/wiki/Neon_Genesis_Evangelion) (1995)
 
 **Mobile/Bot/Tanks** _Internally represented as a BYTE_
+
 |Name|Name (KR)|ID|Remarks|
 |-|-|-|-|
 |Armor|아머|`0x00` (0)|Defaults to Armor when ID is invalid|
@@ -367,31 +368,31 @@ The Softnyx programmers appear to be big fans of [Neon Genesis Evangelion](https
 
 |Name|ID|
 |-|-|
-|ADMINISTRATOR|20|
-|CHICK|19|
-|WOODEN|18|
-|DOUBLE WOODEN|17|
-|STONE|16|
-|DOUBLE STONE|15|
-|AXE|14|
-|DOUBLE AXE|13|
-|SILVER AXE|12|
-|DOUBLE SILVER AXE|11|
-|GOLD AXE|10|
-|DOUBLE GOLD AXE|9|
-|BATTLE AXE|8|
-|BATTLE AXE PLUS|7|
-|SILVER BATTLE AXE|6|
-|SILVER BATTLE AXE PLUS|5|
-|GOLDEN BATTLE AXE|4|
-|GOLDEN BATTLE AXE PLUS|3|
-|VIOLET WAND|2|
-|SAPPHIRE WAND|1|
-|RUBY WAND|0|
-|DIAMOND WAND|-1|
-|BLUE DRAGON|-2|
-|RED DRAGON|-3|
-|SILVER DRAGON|-4|
+|20|ADMINISTRATOR|
+|19|CHICK|
+|18|WOODEN|
+|17|DOUBLE WOODEN|
+|16|STONE|
+|15|DOUBLE STONE|
+|14|AXE|
+|13|DOUBLE AXE|
+|12|SILVER AXE|
+|11|DOUBLE SILVER AXE|
+|10|GOLD AXE|
+|9|DOUBLE GOLD AXE|
+|8|BATTLE AXE|
+|7|BATTLE AXE PLUS|
+|6|SILVER BATTLE AXE|
+|5|SILVER BATTLE AXE PLUS|
+|4|GOLDEN BATTLE AXE|
+|3|GOLDEN BATTLE AXE PLUS|
+|2|VIOLET WAND|
+|1|SAPPHIRE WAND|
+|0|RUBY WAND|
+|-1|DIAMOND WAND|
+|-2|BLUE DRAGON|
+|-3|RED DRAGON|
+|-4|SILVER DRAGON|
 
 
 **Game Mode** _Internal value used to track the client's state_
