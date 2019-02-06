@@ -341,3 +341,70 @@ TODO
 ### Misc
 
 The Softnyx programmers appear to be big fans of [Neon Genesis Evangelion](https://en.wikipedia.org/wiki/Neon_Genesis_Evangelion) (1995)
+
+**Mobile/Bot/Tanks** _Internally represented as a BYTE_
+|Name|Name (KR)|ID|Remarks|
+|-|-|-|-|
+|Armor|아머|`0x00` (0)|Defaults to Armor when ID is invalid|
+|Mage|메이지|`0x01` (1)||
+|Nak|나크|`0x02` (2)||
+|Trico|트리코|`0x03` (3)||
+|Bigfoot|빅풋|`0x04` (4)||
+|Boomer|부머|`0x05` (5)||
+|Raon|레온런쳐|`0x06` (6)||
+|Lightning|라이트닝|`0x07` (7)||
+|J.D.|제이디|`0x08` (8)||
+|A.Sate|에세트|`0x09` (9)||
+|Ice|아이스|`0x0A` (10)||
+|Turtle|터틀|`0x0B` (11)||
+|Grub|그럽|`0x0C` (12)||
+|Aduka|슈퍼2 ("Super 2")|`0x0D` (13)||
+|Dragon|드래곤|`0x0E` (14)||
+|Knight|나이트|`0x0F` (15)||
+|Random|-|`0xFF` (-1)|Asset name is "rider"|
+
+**Ranks** _Internally represented as a 16-bit WORD_
+
+|Name|ID|
+|-|-|
+|ADMINISTRATOR|20|
+|CHICK|19|
+|WOODEN|18|
+|DOUBLE WOODEN|17|
+|STONE|16|
+|DOUBLE STONE|15|
+|AXE|14|
+|DOUBLE AXE|13|
+|SILVER AXE|12|
+|DOUBLE SILVER AXE|11|
+|GOLD AXE|10|
+|DOUBLE GOLD AXE|9|
+|BATTLE AXE|8|
+|BATTLE AXE PLUS|7|
+|SILVER BATTLE AXE|6|
+|SILVER BATTLE AXE PLUS|5|
+|GOLDEN BATTLE AXE|4|
+|GOLDEN BATTLE AXE PLUS|3|
+|VIOLET WAND|2|
+|SAPPHIRE WAND|1|
+|RUBY WAND|0|
+|DIAMOND WAND|-1|
+|BLUE DRAGON|-2|
+|RED DRAGON|-3|
+|SILVER DRAGON|-4|
+
+
+**Game Mode** _Internal value used to track the client's state_
+
+|ID|Name|
+|-|-|
+|1|Intro Splash? (never called)|
+|2|World Select|
+|3|Channel|
+|5|Init3D/Evangelion failed|
+|7|Avatar Shop|
+|9|Room|
+|11|In Game Session (Play)|
+|15|Exit to Desktop|
+
+
