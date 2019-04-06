@@ -459,10 +459,12 @@ class GameUDPServer:
 class CommandProcessor:
     world_session = []
     world_room = []
+    parent_instance = None
 
-    def __init__(self, in_world_session, in_world_room):
+    def __init__(self, in_world_session, in_world_room, in_parent_instance):
         self.world_session = in_world_session
         self.world_room = in_world_room
+        self.parent_instance = in_parent_instance
 
     def join_channel(self, data, client_session, motd_channel):
         # check where the player was previously from - if from game/room, clean up
@@ -574,8 +576,18 @@ class CommandProcessor:
         selected_room: Room = Room.find_room_by_user(self.world_room, client_session.user.username)
         selected_room.room_state = 1  # waiting -> playing
         start_data = bytearray()
-        start_data.append(selected_room.map_id)  # map
 
+        # set the game's map
+        if selected_room.map_id == 0:
+            print("Rolling random map with", self.parent_instance.cave_map_chance_percentage, "%")
+            if random.randint(0, 100) <= self.parent_instance.cave_map_chance_percentage:
+                start_data.append(0)  # special map (cave)
+            else:
+                start_data.append(random.randint(1, 10))  # random, normal map
+        else:
+            start_data.append(selected_room.map_id)  # user-selected map
+
+        # randomized turn order list
         turn_order = list(range(len(selected_room.player_sessions)))
         random.shuffle(turn_order)
 
@@ -583,10 +595,19 @@ class CommandProcessor:
         start_data.extend(int_to_bytes(len(selected_room.player_sessions), 2))
         for session_item in selected_room.player_sessions:
             # random bot selection
+            # turns out that dragon and knight are 17/18 respectively, differing from Serv2's 14/15. Thanks @phnx
             if session_item.room_tank_primary == 0xFF:
-                session_item.room_tank_primary = random.randint(0, 13)
+                print("Rolling primary random with", self.parent_instance.special_bot_chance_percentage, "%")
+                if random.randint(0, 100) <= self.parent_instance.special_bot_chance_percentage:
+                    session_item.room_tank_primary = random.randint(17, 18)
+                else:
+                    session_item.room_tank_primary = random.randint(0, 13)
             if session_item.room_tank_secondary == 0xFF:
-                session_item.room_tank_secondary = random.randint(0, 13)
+                print("Rolling secondary random with", self.parent_instance.special_bot_chance_percentage, "%")
+                if random.randint(0, 100) <= self.parent_instance.special_bot_chance_percentage:
+                    session_item.room_tank_secondary = random.randint(17, 18)
+                else:
+                    session_item.room_tank_secondary = random.randint(0, 13)
 
             start_data.append(session_item.room_slot)
             start_data.extend(resize_bytes(session_item.user.username.encode("ascii"), 0xC))
@@ -676,6 +697,8 @@ class GameServer(object):
     port = 0
     motd_channel = "$Channel MOTD"
     motd_room = "$Room MOTD"
+    special_bot_chance_percentage = 2
+    cave_map_chance_percentage = 20
     gs_funcrestrict = 0xFFFFF
     world_session = []
     world_room = []
@@ -697,7 +720,7 @@ class GameServer(object):
         udp_server = GameUDPServer(host, port)
         threading.Thread(target=udp_server.listen).start()
 
-        self.command_processor = CommandProcessor(self.world_session, self.world_room)
+        self.command_processor = CommandProcessor(self.world_session, self.world_room, self)
         self.insert_test_data()
 
     def listen(self):
@@ -1064,6 +1087,11 @@ class GameServer(object):
                                                 room_other_data[0:4], room_capacity)
                             client_session.room_slot = 0  # host room slot
                             client_session.is_room_key = True  # indicates host
+
+                            # reset the client's internal tank values
+                            client_session.room_tank_primary = 0xFF
+                            client_session.room_tank_secondary = 0xFF
+
                             created_room.player_sessions.append(client_session)
                             self.world_room.append(created_room)
                             print("Creating room", room_title, "with password", room_password,
@@ -1145,8 +1173,8 @@ class GameServer(object):
                                              11: "Turtle",
                                              12: "Grub",
                                              13: "Aduka",
-                                             14: "Dragon",  # technically 14 (from GS), other sources say 125
-                                             15: "Knight",  # technically 15, other sources say 209
+                                             17: "Dragon",  # technically 14 (from disassembly), actually 17 (phnx)
+                                             18: "Knight",  # technically 15, actually 18 (phnx).
                                              255: "Random"}
 
                             tank_primary = data[6]
@@ -1339,6 +1367,21 @@ class GameServer(object):
                                 self.command_processor.print_to_client(client_session, "Saving - check python console.")
                                 User.save_users(self.world_user)
                                 self.command_processor.print_to_client(client_session, "World user state saved")
+
+                            elif command_received == "special_bot_chance":
+                                self.special_bot_chance_percentage = int(command_parameters)
+                                response_message = "Dragon/knight chance: " + str(self.special_bot_chance_percentage)
+                                response_message += "%"
+                                response_message += "\r\n" + "This value is specific to this server instance"
+                                response_message += "\r\n" + "This value is non-persistent (resets on restart)"
+                                self.command_processor.print_to_client(client_session, response_message)
+
+                            elif command_received == "cave_map_chance":
+                                self.cave_map_chance_percentage = int(command_parameters)
+                                response_message = "Cave map chance: " + str(self.cave_map_chance_percentage) + "%"
+                                response_message += "\r\n" + "This value is specific to this server instance"
+                                response_message += "\r\n" + "This value is non-persistent (resets on restart)"
+                                self.command_processor.print_to_client(client_session, response_message)
 
                             elif command_received == "json":
                                 self.command_processor.print_to_client(client_session, client_session.user.to_json())
