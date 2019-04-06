@@ -575,6 +575,10 @@ class CommandProcessor:
         selected_room.room_state = 1  # waiting -> playing
         start_data = bytearray()
         start_data.append(selected_room.map_id)  # map
+
+        turn_order = list(range(len(selected_room.player_sessions)))
+        random.shuffle(turn_order)
+
         # below size of WORD seems excessive, value is guessed
         start_data.extend(int_to_bytes(len(selected_room.player_sessions), 2))
         for session_item in selected_room.player_sessions:
@@ -591,8 +595,7 @@ class CommandProcessor:
             start_data.append(session_item.room_tank_secondary)
             # unknown positional data. looks nothing like the *_stage_pos.txt content
             start_data.extend(bytes.fromhex("36 02 00 00"))
-            start_data.append(session_item.room_slot)  # hack - this value needs incrementing
-            start_data.append(0)  # hack
+            start_data.extend(int_to_bytes(turn_order[session_item.room_slot], 2))  # turn position. thanks @phnx
         # unknown: would guess FuncRestrict but it's short of a byte
         # default FFFF, setting 0000 activates event
         start_data.extend(bytes.fromhex("00 FF"))
@@ -608,7 +611,11 @@ class CommandProcessor:
         selected_room.room_state = 1  # waiting -> playing
         start_data = bytearray()
         # start_data.extend(selected_room.game_settings)
+        # start_data.extend(bytes.fromhex("00 00 00 00"))
+
         start_data.extend(bytes.fromhex("00 00 00 00"))
+        # start_data.extend(unknown_data)  # echo the stuff sent by game host
+
         start_data.append(selected_room.map_id)  # map
         # below size of WORD seems excessive, value is guessed
         start_data.extend(int_to_bytes(len(selected_room.player_sessions), 2))
@@ -638,7 +645,7 @@ class CommandProcessor:
         # current event
         # default FFFF, setting 0000 activates event
         start_data.extend(bytes.fromhex("12 34"))
-        start_data.extend(unknown_data)  # echo the stuff sent by game host
+        # start_data.extend(unknown_data)  # echo the stuff sent by game host
 
         for session_item in selected_room.player_sessions:
             session_item.send_encrypted(0x3432, start_data)
