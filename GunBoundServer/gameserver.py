@@ -269,7 +269,8 @@ class User:
         with open("user_data.json") as user_data_text:
             data_users = json.load(user_data_text)
             for data_user in data_users:
-                user_instance: User = User(data_user["username"], data_user["password"], data_user["guild"], data_user["rank_current"], data_user["rank_season"])
+                user_instance: User = User(data_user["username"], data_user["password"], data_user["guild"],
+                                           data_user["rank_current"], data_user["rank_season"])
                 user_instance.cash = data_user["cash"]
                 user_instance.gold = data_user["gold"]
                 user_instance.avatar_equipped = bytes.fromhex(data_user["avatar_equipped"])
@@ -280,8 +281,8 @@ class User:
         return user_instances
 
     @staticmethod
-    def get_user_by_name(world_user, in_username):
-        for user_item in world_user:
+    def get_user_by_name(in_world_user, in_username):
+        for user_item in in_world_user:
             if user_item.username == in_username:
                 return user_item
         return None
@@ -1425,9 +1426,10 @@ if __name__ == "__main__":
     world_session = []
     world_room = []
     world_user = User.get_users()
-    enabled_server_functions = [FunctionRestrict.EFFECT_THOR, FunctionRestrict.EFFECT_FORCE,
-                                FunctionRestrict.EFFECT_MOON, FunctionRestrict.EFFECT_LIGHTNING,
-                                FunctionRestrict.AVATAR_ENABLED]
+    #enabled_server_functions = [FunctionRestrict.EFFECT_THOR, FunctionRestrict.EFFECT_FORCE,
+    #                            FunctionRestrict.EFFECT_MOON, FunctionRestrict.EFFECT_LIGHTNING,
+    #                            FunctionRestrict.AVATAR_ENABLED]
+    enabled_server_functions = [FunctionRestrict.EFFECT_MOON]
 
     server: GameServer = GameServer("0.0.0.0", 8370, world_session, world_room, world_user)
     server.gs_funcrestrict = FunctionRestrict.get_function_value(enabled_server_functions)
