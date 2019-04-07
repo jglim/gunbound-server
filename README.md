@@ -72,6 +72,8 @@ This project attempts to emulate the server components of GunBound Thor's Hammer
     - `/sessions` prints all active sessions
     - `/save` serializes world user state and saves it to the database/flatfile
     - `/json` prints own session data in JSON format
+    - `/special_bot_chance` Sets the percentage of success when a random bot rolls for Dragon/Knight (default: 2%)
+    - `/cave_map_chance` Sets the percentage of success when a random map rolls for Cave (default: 20%)
     - `/credits` thanks everyone who has contributed to this project
 - TCP Tunneling `0x4500` is not implemented
 - Basic storage/data persistence is implemented (JSON/flat file)
