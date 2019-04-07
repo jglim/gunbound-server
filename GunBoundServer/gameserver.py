@@ -266,7 +266,7 @@ class User:
     @staticmethod
     def get_users():
         user_instances = []
-        with open("user_data.json") as user_data_text:
+        with open("user_data.json", encoding="utf8") as user_data_text:
             data_users = json.load(user_data_text)
             for data_user in data_users:
                 user_instance: User = User(data_user["username"], data_user["password"], data_user["guild"],
@@ -582,15 +582,39 @@ class CommandProcessor:
         if selected_room.map_id == 0:
             print("Rolling random map with", self.parent_instance.cave_map_chance_percentage, "%")
             if random.randint(0, 100) <= self.parent_instance.cave_map_chance_percentage:
-                start_data.append(0)  # special map (cave)
+                selected_room.map_id = 0  # special map (cave), assigning it for readability
             else:
-                start_data.append(random.randint(1, 10))  # random, normal map
+                selected_room.map_id = random.randint(1, 10)
+            start_data.append(selected_room.map_id)  # random, normal map
         else:
             start_data.append(selected_room.map_id)  # user-selected map
+
+        current_map_data = None
+        spawn_points = []  # can be overwritten in the future to support Mix / EvsW
+        for map_row in self.parent_instance.map_data:
+            if map_row["map_id"] == selected_room.map_id:
+                current_map_data = map_row
+                map_side_ab = selected_room.game_settings[2] & 1
+                print("Map Side (A=0, B=1): ", map_side_ab)
+                if map_side_ab == 0:
+                    spawn_points = current_map_data["positions_a_side"]
+                else:
+                    spawn_points = current_map_data["positions_b_side"]
+        # In Serv2, if ( numberOfPlayers <= 6 ), "Small Mode" is internally activated.
+        # I am not sure what it does yet. Probably to prevent spawning players too far from each other
+
+        print(current_map_data)
+        print(spawn_points)
+
+        # randomized spawn order list (8 possible spawn points)
+        spawn_order = list(range(8))
+        random.shuffle(spawn_order)
+        print("Spawn order / slot:", spawn_order)
 
         # randomized turn order list
         turn_order = list(range(len(selected_room.player_sessions)))
         random.shuffle(turn_order)
+        print("Turn order / slot:", turn_order)
 
         # below size of WORD seems excessive, value is guessed
         start_data.extend(int_to_bytes(len(selected_room.player_sessions), 2))
@@ -612,11 +636,18 @@ class CommandProcessor:
 
             start_data.append(session_item.room_slot)
             start_data.extend(resize_bytes(session_item.user.username.encode("ascii"), 0xC))
-            start_data.append(session_item.room_team)  # guessed
+            start_data.append(session_item.room_team)
             start_data.append(session_item.room_tank_primary)
             start_data.append(session_item.room_tank_secondary)
-            # unknown positional data. looks nothing like the *_stage_pos.txt content
-            start_data.extend(bytes.fromhex("36 02 00 00"))
+            # Positional data: x (2 bytes), y (2 bytes). thanks @phnx
+            player_spawn_point = spawn_points[spawn_order[session_item.room_slot]]  # default randomized spawn
+            # player_spawn_point = spawn_points[7]  # override spawn position. use either this or the above line
+            player_x = random.randint(player_spawn_point["x_min"], player_spawn_point["x_max"])
+            player_y = 0 if player_spawn_point["y"] is None else player_spawn_point["y"]
+            print("Player spawn point:", player_spawn_point, "x:", player_x, "y", player_y)
+            start_data.extend(int_to_bytes(player_x, 2))  # x position
+            start_data.extend(int_to_bytes(player_y, 2))  # y position
+
             start_data.extend(int_to_bytes(turn_order[session_item.room_slot], 2))  # turn position. thanks @phnx
         # unknown: would guess FuncRestrict but it's short of a byte
         # default FFFF, setting 0000 activates event
@@ -692,14 +723,14 @@ class CommandProcessor:
         client_session.send_encrypted(0x3432, gamesession_data)
 
 
-
 class GameServer(object):
     host = None
     port = 0
     motd_channel = "$Channel MOTD"
     motd_room = "$Room MOTD"
-    special_bot_chance_percentage = 2
-    cave_map_chance_percentage = 20
+    special_bot_chance_percentage = 2  # normally 2% (2)
+    cave_map_chance_percentage = 100  # normally 20% (20)
+    map_data = []
     gs_funcrestrict = 0xFFFFF
     world_session = []
     world_room = []
@@ -718,6 +749,7 @@ class GameServer(object):
         self.world_user = in_world_user
         print("GS: TCP Bound")
 
+        self.map_data = GameServer.get_map_data()
         udp_server = GameUDPServer(host, port)
         threading.Thread(target=udp_server.listen).start()
 
@@ -747,6 +779,11 @@ class GameServer(object):
             test_room.player_sessions.append(virtual_session)
             self.world_room.append(test_room)
             room_index += 1
+
+    @staticmethod
+    def get_map_data():
+        with open("map_data.json",  encoding="utf8") as map_data_text:
+            return json.load(map_data_text)
 
     def client_connection(self, client, address):
         print("GS: New connection from", address)
