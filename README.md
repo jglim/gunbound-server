@@ -53,7 +53,7 @@ This project attempts to emulate the server components of GunBound Thor's Hammer
     - Password checks are acknowledged but ignored
     - Room host/key migration (appears to be) functional
     - Room start is implemented (Serv2 only - GIS: buggy)
-    - Room start position is fixed (does not look up `*_stage_pos.txt`)
+    - Room spawn position is implemented based on the official Rand_stage_pos.txt
     - Room rejoin after game end is implemented
     - Room kick is not implemented
 - Game session is partially implemented
@@ -96,17 +96,19 @@ _Requires Python 3.6_
     - It appears similar to Serv2, but starts with 4 (?) new unknown bytes
     - I somehow end up with Armor even though the client's debug log indicates that the tank data is correctly read. Fuzzing the entire packet does not change the tank I receive.
     - Something is probably broken somewhere in the game start because the client bugs up when returning to the lobby after a game.
-- Fix Dragon/Knight "random"
-    - According to the disassembly, there is a small chance that the server will give the user tank 14 (dragon) or tank 15 (knight) as a random tank. 
-    - However when this occurs, the client shows an invisible tank in the lobby, and defaults to Armor in game. 
-    - The dragon/knight assets are present in the client
-    - How can the intended behavior be restored?
-    - Use the command `/tankset 14` or `/tankset 15` after joining a room to reproduce this bug
-- Set start position
-    - When a game starts, players are randomly assigned in-game positions
-    - The data should be read off `*_stage_pos.txt` and slots are picked based on the map
-    - If the player count is below a certain (?) threshold, "Small mode" is enabled and players spawn closer to each other.
-    - There seems to be 4 bytes that decide this, but they don't match up with values from the text files above. How are the values correlated?
+- ~~Fix Dragon/Knight "random"~~
+    - ~~According to the disassembly, there is a small chance that the server will give the user tank 14 (dragon) or tank 15 (knight) as a random tank.~~ 
+    - ~~However when this occurs, the client shows an invisible tank in the lobby, and defaults to Armor in game.~~ 
+    - ~~The dragon/knight assets are present in the client~~
+    - ~~How can the intended behavior be restored?~~
+    - ~~Use the command `/tankset 14` or `/tankset 15` after joining a room to reproduce this bug~~
+    - Dragon / Knight are 17 / 18 respectively. The old Serv2 incorrectly issues 14 / 15. Thanks phnx
+- ~~Set start position~~
+    - ~~When a game starts, players are randomly assigned in-game positions~~
+    - ~~The data should be read off `*_stage_pos.txt` and slots are picked based on the map~~
+    - ~~If the player count is below a certain (?) threshold, "Small mode" is enabled and players spawn closer to each other.~~
+    - ~~There seems to be 4 bytes that decide this, but they don't match up with values from the text files above. How are the values correlated?~~
+    - The data in `*_stage_pos.txt` indicate only minimum and maximum x values for each spawn point. Thanks phnx 
 - Fix GIS login
     - The GIS client accepts the login response `0x1012` without issue, but never requests to join the channel.
     - A hacky solution I used is to send the *response* for channel join even though it was not requested, as that changes the gamemode to 3 (channel/directory). Everything else seems to work fine from there.
@@ -121,8 +123,8 @@ _Requires Python 3.6_
 
 **Softnyx**
 ethera knights blash45 pirania chuko scjang loserii johnny5 designer reddragon jchlee75 yaong2 jaeyong yesoori enddream cozy comsik
-- **phnx** (RZ) - _GunBound theory_
-- **Kimberly** (RZ) - _Clients_
+- **phnx** (RZ) - _GunBound theory, multiple fixes (`CTRL+F` 'phnx')_
+- **Kimberly** (RZ) - _Clients, **a lot** of GunBound history_
 - **LeoTheFox** (RZ) - _GunBound theory_
 - **vkiko2** (UC) - _IDAPython GameGuard string decryption_
 - **XFSGAMES** (?) - _InsideGB_
@@ -360,8 +362,8 @@ The Softnyx programmers appear to be big fans of [Neon Genesis Evangelion](https
 |Turtle|터틀|`0x0B` (11)||
 |Grub|그럽|`0x0C` (12)||
 |Aduka|슈퍼2 ("Super 2")|`0x0D` (13)||
-|Dragon|드래곤|`0x0E` (14)||
-|Knight|나이트|`0x0F` (15)||
+|Dragon|드래곤|`0x11` (17)|Serv2 incorrectly sends 14|
+|Knight|나이트|`0x12` (18)|Serv2 incorrectly sends 15|
 |Random|-|`0xFF` (-1)|Asset name is "rider"|
 
 **Ranks** _Internally represented as a 16-bit WORD_
