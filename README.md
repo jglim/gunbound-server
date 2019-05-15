@@ -2,6 +2,8 @@
 
 This project attempts to emulate the server components of GunBound Thor's Hammer, which was discontinued in 2006.
 
+_녹염만세만세만만세_
+
 **Screenshots**
 
 ![Channel Chat](https://raw.github.com/jglim/gunbound-server/master/Other/channelchat.gif)
