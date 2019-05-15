@@ -12,6 +12,7 @@ _녹염만세만세만만세_
 ![Game End](https://raw.github.com/jglim/gunbound-server/master/Other/gb-gameend.png)
 ![Post Game Lobby](https://raw.github.com/jglim/gunbound-server/master/Other/gb-postgame.png)
 ![Avatar](https://raw.github.com/jglim/gunbound-server/master/Other/gb-avatar.png)
+![Random Dragon/Knight](https://raw.github.com/jglim/gunbound-server/master/Other/gb-random.png)
 
 ### Objective
 
